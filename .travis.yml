@@ -1,0 +1,25 @@
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker image build -t gloompi/client-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker container run gloompi/client-test yarn run test --watchAll=false
+
+after_script:
+  - docker image build -t gloompi/multi-client ./client
+  - docker image build -t gloompi/multi-nginx ./nginx
+  - docker image build -t gloompi/multi-server ./server
+  - docker image build -t gloompi/multi-worker ./worker
+
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Take those images and push them to the docker hub
+  - docker push gloompi/multi-client
+  - docker push gloompi/multi-nginx
+  - docker push gloompi/multi-server
+  - docker push gloompi/multi-worker
